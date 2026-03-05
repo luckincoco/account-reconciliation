@@ -1,0 +1,89 @@
+{
+  "common": {
+    "appName": "DuiZhang",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "back": "Back",
+    "export": "Export",
+    "search": "Search",
+    "noData": "No data yet"
+  },
+  "nav": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "reconciliation": "Reconciliation",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Two traders, one scan, accounts reconciled",
+    "subtitle": "Simple reconciliation tool, AI finds the differences",
+    "getStarted": "Get Started",
+    "loginPrompt": "Log in to start tracking"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "loginWithWeChat": "Log in with WeChat",
+    "loginWithGoogle": "Log in with Google",
+    "loginWithEmail": "Log in with Email",
+    "magicLinkSent": "A login link has been sent to your email",
+    "welcomeBack": "Welcome back"
+  },
+  "transactions": {
+    "title": "Transactions",
+    "new": "New Transaction",
+    "counterpart": "Counterpart",
+    "itemName": "Item Name",
+    "spec": "Specification",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "unitPrice": "Unit Price",
+    "amount": "Amount",
+    "date": "Date",
+    "typeIn": "Purchase",
+    "typeOut": "Sale",
+    "sourcePhoto": "Photo Entry",
+    "sourceManual": "Manual Entry",
+    "sourceVoice": "Voice Entry",
+    "empty": "No transactions yet. Click \"New Transaction\" to get started"
+  },
+  "reconciliation": {
+    "title": "Reconciliation",
+    "new": "Start Reconciliation",
+    "selectPeriod": "Select reconciliation period",
+    "dateFrom": "Start Date",
+    "dateTo": "End Date",
+    "shareLink": "Share Reconciliation Link",
+    "copyLink": "Copy Link",
+    "matched": "Matched",
+    "diff": "Difference",
+    "missing": "Missing",
+    "statusPending": "Pending",
+    "statusInProgress": "In Progress",
+    "statusCompleted": "Completed",
+    "resultSummary": "Result: {matched} matched, {diff} differences, {missing} missing",
+    "exportPdf": "Export PDF Report",
+    "empty": "No reconciliations yet. Click \"Start Reconciliation\" to begin"
+  },
+  "share": {
+    "title": "Reconciliation Confirmation",
+    "from": "{name} invites you to confirm reconciliation",
+    "confirmAll": "Confirm All",
+    "markDiff": "Mark Difference",
+    "uploadYours": "Upload Your Records",
+    "registerPrompt": "Create a free account for faster reconciliation next time"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "account": "Account",
+    "plan": "Current Plan",
+    "planFree": "Free",
+    "planPro": "Pro",
+    "upgrade": "Upgrade to Pro"
+  }
+}

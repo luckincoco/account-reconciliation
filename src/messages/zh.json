@@ -1,0 +1,89 @@
+{
+  "common": {
+    "appName": "DuiZhang",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "confirm": "确认",
+    "loading": "加载中...",
+    "back": "返回",
+    "export": "导出",
+    "search": "搜索",
+    "noData": "暂无数据"
+  },
+  "nav": {
+    "home": "首页",
+    "transactions": "交易记录",
+    "reconciliation": "对账",
+    "settings": "设置"
+  },
+  "home": {
+    "title": "两个生意人，扫一扫就能对账",
+    "subtitle": "极简对账工具，AI 帮你找出差异",
+    "getStarted": "开始使用",
+    "loginPrompt": "登录后开始记账"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出登录",
+    "loginWithWeChat": "微信登录",
+    "loginWithGoogle": "Google 登录",
+    "loginWithEmail": "邮箱登录",
+    "magicLinkSent": "登录链接已发送到你的邮箱，请查收",
+    "welcomeBack": "欢迎回来"
+  },
+  "transactions": {
+    "title": "交易记录",
+    "new": "新建交易",
+    "counterpart": "对方名称",
+    "itemName": "商品名称",
+    "spec": "规格",
+    "quantity": "数量",
+    "unit": "单位",
+    "unitPrice": "单价",
+    "amount": "金额",
+    "date": "交易日期",
+    "typeIn": "进货",
+    "typeOut": "出货",
+    "sourcePhoto": "拍照录入",
+    "sourceManual": "手动录入",
+    "sourceVoice": "语音录入",
+    "empty": "还没有交易记录，点击「新建交易」开始"
+  },
+  "reconciliation": {
+    "title": "对账管理",
+    "new": "发起对账",
+    "selectPeriod": "选择对账时间段",
+    "dateFrom": "开始日期",
+    "dateTo": "结束日期",
+    "shareLink": "分享对账链接",
+    "copyLink": "复制链接",
+    "matched": "一致",
+    "diff": "有差异",
+    "missing": "缺失",
+    "statusPending": "等待确认",
+    "statusInProgress": "对账中",
+    "statusCompleted": "已完成",
+    "resultSummary": "对账结果：一致 {matched} 笔，差异 {diff} 笔，缺失 {missing} 笔",
+    "exportPdf": "导出 PDF 报告",
+    "empty": "还没有对账记录，点击「发起对账」开始"
+  },
+  "share": {
+    "title": "对账确认",
+    "from": "{name} 邀请你确认对账",
+    "confirmAll": "全部确认",
+    "markDiff": "标记差异",
+    "uploadYours": "上传你的账目",
+    "registerPrompt": "免费创建账号，下次对账更快"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "account": "账号信息",
+    "plan": "当前套餐",
+    "planFree": "免费版",
+    "planPro": "Pro 版",
+    "upgrade": "升级 Pro"
+  }
+}
