@@ -15,12 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { transactionSchema } from "@/lib/validations";
 
 export default function NewTransactionPage() {
   const t = useTranslations("transactions");
   const tc = useTranslations("common");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     type: "in" as "in" | "out",
@@ -35,14 +37,18 @@ export default function NewTransactionPage() {
   });
 
   function updateField(field: string, value: string) {
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      // Auto-calculate amount when quantity or unit_price changes
       if (field === "quantity" || field === "unit_price") {
         const qty = field === "quantity" ? Number(value) : Number(prev.quantity);
         const price = field === "unit_price" ? Number(value) : Number(prev.unit_price);
         if (qty && price) {
-          next.amount = (qty * price).toString();
+          next.amount = (qty * price).toFixed(2);
         }
       }
       return next;
@@ -51,8 +57,23 @@ export default function NewTransactionPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.counterpart_name || !form.item_name || !form.date) {
-      toast.error("Please fill in required fields");
+
+    const result = transactionSchema.safeParse({
+      ...form,
+      quantity: Number(form.quantity) || 0,
+      unit_price: Number(form.unit_price) || 0,
+      amount: Number(form.amount) || 0,
+      source: "manual",
+    });
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0]?.toString();
+        if (key) fieldErrors[key] = issue.message;
+      }
+      setErrors(fieldErrors);
+      toast.error(t("validationError") || "Please check form fields");
       return;
     }
 
@@ -61,13 +82,7 @@ export default function NewTransactionPage() {
       const res = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          quantity: Number(form.quantity) || 0,
-          unit_price: Number(form.unit_price) || 0,
-          amount: Number(form.amount) || 0,
-          source: "manual",
-        }),
+        body: JSON.stringify(result.data),
       });
       const json = await res.json();
       if (json.success) {
@@ -113,8 +128,11 @@ export default function NewTransactionPage() {
                 placeholder={t("counterpart")}
                 value={form.counterpart_name}
                 onChange={(e) => updateField("counterpart_name", e.target.value)}
-                required
+                className={errors.counterpart_name ? "border-red-500" : ""}
               />
+              {errors.counterpart_name && (
+                <p className="text-xs text-red-500">{errors.counterpart_name}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -124,8 +142,11 @@ export default function NewTransactionPage() {
                 placeholder={t("itemName")}
                 value={form.item_name}
                 onChange={(e) => updateField("item_name", e.target.value)}
-                required
+                className={errors.item_name ? "border-red-500" : ""}
               />
+              {errors.item_name && (
+                <p className="text-xs text-red-500">{errors.item_name}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -164,7 +185,7 @@ export default function NewTransactionPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount">{t("amount")}</Label>
+                <Label htmlFor="amount">{t("amount")} *</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -172,7 +193,11 @@ export default function NewTransactionPage() {
                   placeholder="0.00"
                   value={form.amount}
                   onChange={(e) => updateField("amount", e.target.value)}
+                  className={errors.amount ? "border-red-500" : ""}
                 />
+                {errors.amount && (
+                  <p className="text-xs text-red-500">{errors.amount}</p>
+                )}
               </div>
             </div>
 
@@ -183,8 +208,11 @@ export default function NewTransactionPage() {
                 type="date"
                 value={form.date}
                 onChange={(e) => updateField("date", e.target.value)}
-                required
+                className={errors.date ? "border-red-500" : ""}
               />
+              {errors.date && (
+                <p className="text-xs text-red-500">{errors.date}</p>
+              )}
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>

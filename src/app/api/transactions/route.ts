@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { transactionSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -67,14 +68,15 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const { counterpart_name, type, item_name, spec, quantity, unit, unit_price, amount, date, source, image_url } = body;
-
-  if (!counterpart_name || !type || !item_name || !date) {
+  const result = transactionSchema.safeParse(body);
+  if (!result.success) {
     return NextResponse.json(
-      { error: "Missing required fields: counterpart_name, type, item_name, date" },
+      { error: "Validation failed", details: result.error.flatten().fieldErrors },
       { status: 400 }
     );
   }
+
+  const { type, counterpart_name, item_name, spec, quantity, unit, unit_price, amount, date, source } = result.data;
 
   const { data, error } = await supabase
     .from("transactions")
@@ -84,13 +86,13 @@ export async function POST(request: NextRequest) {
       type,
       item_name,
       spec: spec || null,
-      quantity: Number(quantity) || 0,
+      quantity,
       unit: unit || "",
-      unit_price: Number(unit_price) || 0,
-      amount: Number(amount) || 0,
+      unit_price,
+      amount,
       date,
-      source: source || "manual",
-      image_url: image_url || null,
+      source,
+      image_url: body.image_url || null,
     })
     .select()
     .single();

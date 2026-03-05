@@ -1,42 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Reconciliation } from "@/types/reconciliation";
+import { useReconciliations } from "@/hooks/use-reconciliation";
+
+function ReconSkeleton() {
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between py-3 px-4">
+        <div className="space-y-2">
+          <div className="h-4 w-40 rounded bg-muted animate-pulse" />
+          <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+        </div>
+        <div className="h-5 w-16 rounded bg-muted animate-pulse" />
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function ReconciliationsPage() {
   const t = useTranslations("reconciliation");
-  const tc = useTranslations("common");
-  const [recons, setRecons] = useState<Reconciliation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { reconciliations, isLoading } = useReconciliations();
 
-  useEffect(() => {
-    fetch("/api/reconciliations")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) setRecons(json.data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+  const statusMap: Record<
+    string,
+    { label: string; variant: "default" | "secondary" | "outline" }
+  > = {
     pending: { label: t("statusPending"), variant: "outline" },
     in_progress: { label: t("statusInProgress"), variant: "secondary" },
     completed: { label: t("statusCompleted"), variant: "default" },
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">{tc("loading")}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -47,7 +43,13 @@ export default function ReconciliationsPage() {
         </Button>
       </div>
 
-      {recons.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ReconSkeleton key={i} />
+          ))}
+        </div>
+      ) : reconciliations.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <p className="text-center text-muted-foreground">{t("empty")}</p>
@@ -60,7 +62,7 @@ export default function ReconciliationsPage() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {recons.map((r) => {
+          {reconciliations.map((r) => {
             const status = statusMap[r.status] || statusMap.pending;
             return (
               <Link key={r.id} href={`/reconciliations/${r.id}`}>

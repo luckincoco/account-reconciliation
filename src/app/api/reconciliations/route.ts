@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { nanoid } from "nanoid";
+import { reconciliationSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -45,14 +46,16 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { date_from, date_to } = body;
 
-  if (!date_from || !date_to) {
+  const result = reconciliationSchema.safeParse(body);
+  if (!result.success) {
     return NextResponse.json(
-      { error: "Missing required fields: date_from, date_to" },
+      { error: "Validation failed", details: result.error.flatten().fieldErrors },
       { status: 400 }
     );
   }
+
+  const { date_from, date_to } = result.data;
 
   const share_token = nanoid(12);
 

@@ -6,7 +6,25 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PhotoCapture } from "@/components/business/photo-capture";
 import type { Transaction } from "@/types/transaction";
+
+function TransactionSkeleton() {
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between py-3 px-4">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-10 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+          </div>
+          <div className="h-3 w-40 rounded bg-muted animate-pulse" />
+        </div>
+        <div className="h-5 w-16 rounded bg-muted animate-pulse" />
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function TransactionsPage() {
   const t = useTranslations("transactions");
@@ -18,7 +36,7 @@ export default function TransactionsPage() {
     fetch("/api/transactions")
       .then((res) => res.json())
       .then((json) => {
-        if (json.success) setTransactions(json.data);
+        if (json.success) setTransactions(json.data || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -35,28 +53,30 @@ export default function TransactionsPage() {
       });
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">{tc("loading")}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("title")}</h1>
-        <Button asChild>
-          <Link href="/transactions/new">{t("new")}</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <PhotoCapture />
+          <Button asChild>
+            <Link href="/transactions/new">{t("new")}</Link>
+          </Button>
+        </div>
       </div>
 
-      {transactions.length === 0 ? (
+      {loading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <TransactionSkeleton key={i} />
+          ))}
+        </div>
+      ) : transactions.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <p className="text-center text-muted-foreground">{t("empty")}</p>
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center gap-2 mt-4">
+              <PhotoCapture />
               <Button asChild variant="outline">
                 <Link href="/transactions/new">{t("new")}</Link>
               </Button>

@@ -6,7 +6,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { Reconciliation, ReconMatch } from "@/types/reconciliation";
+import type { Reconciliation } from "@/types/reconciliation";
+import { generateReconPdf } from "@/lib/export-pdf";
+import { ReconMatchTable } from "@/components/business/recon-match-table";
+
+interface EnrichedMatch {
+  id: string;
+  match_status: "matched" | "diff" | "missing";
+  diff_detail: string | null;
+  confirmed: boolean;
+  my_tx: { item_name: string; amount: number; date: string } | null;
+  their_tx: { item_name: string; amount: number; date: string } | null;
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-7 w-40 rounded bg-muted" />
+        <div className="h-5 w-20 rounded bg-muted" />
+      </div>
+      <div className="h-4 w-48 rounded bg-muted" />
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="pt-6">
+              <div className="h-4 w-16 rounded bg-muted mb-2" />
+              <div className="h-8 w-12 rounded bg-muted" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ReconciliationDetailPage({
   params,
@@ -17,7 +50,7 @@ export default function ReconciliationDetailPage({
   const tc = useTranslations("common");
   const [id, setId] = useState("");
   const [recon, setRecon] = useState<Reconciliation | null>(null);
-  const [matches, setMatches] = useState<ReconMatch[]>([]);
+  const [matches, setMatches] = useState<EnrichedMatch[]>([]);
   const [summary, setSummary] = useState({ matched: 0, diff: 0, missing: 0 });
   const [loading, setLoading] = useState(true);
   const [matching, setMatching] = useState(false);
@@ -71,21 +104,41 @@ export default function ReconciliationDetailPage({
   function handleCopyLink() {
     if (!recon) return;
     const url = `${window.location.origin}/recon/${recon.share_token}`;
-    navigator.clipboard.writeText(url).then(() => {
-      toast.success(t("copyLink") + " - OK");
-    });
+    navigator.clipboard.writeText(url).then(
+      () => toast.success(t("copyLink") + " - OK"),
+      () => {
+        // Fallback for older browsers / non-HTTPS
+        const input = document.createElement("input");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+        toast.success(t("copyLink") + " - OK");
+      }
+    );
   }
 
   function handleExport() {
-    window.open(`/api/export/pdf?recon_id=${id}`, "_blank");
+    if (!recon) return;
+    generateReconPdf({
+      id,
+      date_from: recon.date_from,
+      date_to: recon.date_to,
+      status: recon.status,
+      summary,
+      matches: matches.map((m) => ({
+        match_status: m.match_status,
+        diff_detail: m.diff_detail,
+        my_tx: m.my_tx || null,
+        their_tx: m.their_tx || null,
+      })),
+    });
+    toast.success(t("exportPdf") + " - OK");
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-muted-foreground">{tc("loading")}</p>
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!recon) {
@@ -96,7 +149,10 @@ export default function ReconciliationDetailPage({
     );
   }
 
-  const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+  const statusMap: Record<
+    string,
+    { label: string; variant: "default" | "secondary" | "outline" }
+  > = {
     pending: { label: t("statusPending"), variant: "outline" },
     in_progress: { label: t("statusInProgress"), variant: "secondary" },
     completed: { label: t("statusCompleted"), variant: "default" },
@@ -114,6 +170,7 @@ export default function ReconciliationDetailPage({
         {recon.date_from} ~ {recon.date_to}
       </p>
 
+      {/* Summary cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
@@ -122,7 +179,9 @@ export default function ReconciliationDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{summary.matched}</p>
+            <p className="text-2xl font-bold text-green-600">
+              {summary.matched}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -142,66 +201,88 @@ export default function ReconciliationDetailPage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-red-600">{summary.missing}</p>
+            <p className="text-2xl font-bold text-red-600">
+              {summary.missing}
+            </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
         <Button onClick={handleMatch} disabled={matching}>
           {matching ? tc("loading") : "AI Match"}
         </Button>
         <Button variant="outline" onClick={handleCopyLink}>
-          {t("shareLink")}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="mr-1"
+          >
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          {t("copyLink")}
         </Button>
         <Button variant="outline" onClick={handleExport}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="mr-1"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
           {t("exportPdf")}
         </Button>
       </div>
 
-      {matches.length > 0 && (
+      {/* Share link display */}
+      {recon.share_token && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">
-              {t("resultSummary", {
-                matched: String(summary.matched),
-                diff: String(summary.diff),
-                missing: String(summary.missing),
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {matches.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center gap-2 rounded-md border p-2 text-sm"
-                >
-                  <Badge
-                    variant={
-                      m.match_status === "matched"
-                        ? "default"
-                        : m.match_status === "diff"
-                        ? "secondary"
-                        : "destructive"
-                    }
-                    className="text-xs"
-                  >
-                    {m.match_status === "matched"
-                      ? t("matched")
-                      : m.match_status === "diff"
-                      ? t("diff")
-                      : t("missing")}
-                  </Badge>
-                  <span className="flex-1 text-muted-foreground truncate">
-                    {m.diff_detail || (m.match_status === "matched" ? "OK" : "-")}
-                  </span>
-                </div>
-              ))}
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <code className="flex-1 truncate rounded bg-muted px-3 py-2 text-xs">
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/recon/${recon.share_token}`
+                  : `/recon/${recon.share_token}`}
+              </code>
+              <Button size="sm" variant="secondary" onClick={handleCopyLink}>
+                {t("copyLink")}
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Detailed match table */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">
+          {matches.length > 0
+            ? t("resultSummary", {
+                matched: String(summary.matched),
+                diff: String(summary.diff),
+                missing: String(summary.missing),
+              })
+            : "Match Details"}
+        </h2>
+        <ReconMatchTable matches={matches} />
+      </div>
     </div>
   );
 }

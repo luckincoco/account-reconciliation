@@ -39,14 +39,34 @@ export async function GET(
     return NextResponse.json({ error: matchError.message }, { status: 500 });
   }
 
+  // Fetch related transactions for match details
+  const myTxIds = (matches || []).map((m) => m.my_tx_id).filter(Boolean);
+  const theirTxIds = (matches || []).map((m) => m.their_tx_id).filter(Boolean);
+  const allTxIds = [...new Set([...myTxIds, ...theirTxIds])];
+
+  const txMap = new Map<string, { item_name: string; amount: number; date: string }>();
+  if (allTxIds.length > 0) {
+    const { data: txs } = await supabase
+      .from("transactions")
+      .select("id, item_name, amount, date")
+      .in("id", allTxIds);
+    (txs || []).forEach((tx) => txMap.set(tx.id, tx));
+  }
+
+  const enrichedMatches = (matches || []).map((m) => ({
+    ...m,
+    my_tx: m.my_tx_id ? txMap.get(m.my_tx_id) || null : null,
+    their_tx: m.their_tx_id ? txMap.get(m.their_tx_id) || null : null,
+  }));
+
   const summary = {
-    matched: matches?.filter((m) => m.match_status === "matched").length ?? 0,
-    diff: matches?.filter((m) => m.match_status === "diff").length ?? 0,
-    missing: matches?.filter((m) => m.match_status === "missing").length ?? 0,
+    matched: enrichedMatches.filter((m) => m.match_status === "matched").length,
+    diff: enrichedMatches.filter((m) => m.match_status === "diff").length,
+    missing: enrichedMatches.filter((m) => m.match_status === "missing").length,
   };
 
   return NextResponse.json({
     success: true,
-    data: { ...recon, matches, summary },
+    data: { ...recon, matches: enrichedMatches, summary },
   });
 }
